@@ -1,5 +1,7 @@
 /* Follow code in Computing the Pixel Coordinates of a 3D Point */
 
+#include "geometry.h"
+
 /* Vertices data from lesson page. */
 const Vec3f verts[146] = { 
     {        0,    39.034,         0}, {  0.76212,    36.843,         0}, 
@@ -77,3 +79,23 @@ const Vec3f verts[146] = {
     {        0,        -5,    4.3526}, {        0,        -5,    4.3526} 
 }; 
 
+void computerPixelCoordinate(
+    Vec3f &WorldCord,
+    Vec2i &PixelCorrdinate,
+    Mat44f &CameraToWorld,
+    float &CanvasWidth,
+    float &CanvasHeight,
+    float &ImageWidth,
+    float &IMageHeight
+    )
+{
+    /* Convert to camera space. */
+    Vec3f cameraCord;
+
+    CameraToWorld.multiple(WorldCord, cameraCord);
+}
+
+int main()
+{
+    return 0;
+}
