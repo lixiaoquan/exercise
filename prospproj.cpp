@@ -1,4 +1,11 @@
 /* Follow code in Computing the Pixel Coordinates of a 3D Point */
+#include <iostream> 
+#include <cstdlib> 
+#include <cstdio> 
+#include <fstream> 
+#include <cmath> 
+#include <iomanip> 
+#include "stdint.h"
 
 #include "geometry.h"
 
@@ -79,23 +86,118 @@ const Vec3f verts[146] = {
     {        0,        -5,    4.3526}, {        0,        -5,    4.3526} 
 }; 
 
+const int numTris = 128;
+
+const uint32_t tris[numTris * 3] = { 
+      8,   7,   9,   6,   5,   7,   4,   3,   5,   2,   1,   3,   0,   9,   1, 
+      5,   3,   7,   7,   3,   9,   9,   3,   1,  10,  12,  11,  13,  15,  14, 
+     15,  13,  16,  13,  17,  16,  18,  20,  19,  17,  20,  21,  20,  23,  22, 
+     20,  24,  23,  23,  26,  25,  24,  26,  23,  26,  27,  25,  26,  28,  27, 
+     27,  30,  29,  28,  30,  27,  30,  32,  31,  30,  33,  32,  27,  30,  34, 
+     32,  36,  35,  33,  36,  32,  36,  38,  37,  36,  39,  38,  38,  41,  40, 
+     39,  41,  38,  41,  43,  42,  41,  44,  43,  44,  45,  43,  44,  47,  46, 
+     44,  48,  47,  48,  49,  47,  48,  51,  50,  10,  52,  12,  13,  53,  54, 
+     55,  17,  54,  13,  54,  17,  56,  57,  20,  17,  58,  20,  20,  59,  60, 
+     20,  60,  24,  60,  61,  26,  24,  60,  26,  26,  61,  62,  26,  62,  28, 
+     62,  63,  30,  28,  62,  30,  30,  64,  65,  30,  65,  33,  62,  66,  30, 
+     65,  67,  36,  33,  65,  36,  36,  68,  69,  36,  69,  39,  69,  70,  41, 
+     39,  69,  41,  41,  71,  72,  41,  72,  44,  44,  72,  73,  44,  74,  75, 
+     44,  75,  48,  48,  75,  76,  48,  77,  51,  78,  80,  79,  81,  83,  82, 
+     83,  81,  84,  81,  85,  84,  86,  88,  87,  85,  88,  89,  88,  91,  90, 
+     88,  92,  91,  91,  94,  93,  92,  94,  91,  94,  95,  93,  94,  96,  95, 
+     95,  98,  97,  96,  98,  95,  98, 100,  99,  98, 101, 100,  95,  98, 102, 
+    100, 104, 103, 101, 104, 100, 104, 106, 105, 104, 107, 106, 106, 109, 108, 
+    107, 109, 106, 109, 111, 110, 109, 112, 111, 112, 113, 111, 112, 115, 114, 
+    112, 116, 115, 116, 117, 115, 116, 119, 118,  78, 120,  80,  81, 121, 122, 
+    123,  85, 122,  81, 122,  85, 124, 125,  88,  85, 126,  88,  88, 127, 128, 
+     88, 128,  92, 128, 129,  94,  92, 128,  94,  94, 129, 130,  94, 130,  96, 
+    130, 131,  98,  96, 130,  98,  98, 132, 133,  98, 133, 101, 130, 134,  98, 
+    133, 135, 104, 101, 133, 104, 104, 136, 137, 104, 137, 107, 137, 138, 109, 
+    107, 137, 109, 109, 139, 140, 109, 140, 112, 112, 140, 141, 112, 142, 143, 
+    112, 143, 116, 116, 143, 144, 116, 145, 119 
+}; 
+
 void computerPixelCoordinate(
     Vec3f &WorldCord,
     Vec2i &PixelCorrdinate,
-    Mat44f &CameraToWorld,
+    Mat44f &worldToCamera,
     float &CanvasWidth,
     float &CanvasHeight,
-    float &ImageWidth,
-    float &IMageHeight
+    uint32_t &ImageWidth,
+    uint32_t &ImageHeight
     )
 {
     /* Convert to camera space. */
     Vec3f cameraCord;
+    Vec2f screenCord;
 
-    CameraToWorld.multiple(WorldCord, cameraCord);
+    std::cerr << "World Coord: " << WorldCord << std::endl;
+
+    worldToCamera.multiple(WorldCord, cameraCord);
+
+    std::cerr << "Camera Coord:" << cameraCord << std::endl;
+
+    screenCord.x = - cameraCord.x / cameraCord.z;
+    screenCord.y = - cameraCord.y / cameraCord.z;
+
+    std::cerr << "Screen Coord:" << screenCord << std::endl;
+
+    /* NDC. */
+    screenCord.x = (screenCord.x + CanvasWidth/2) / CanvasWidth; 
+    screenCord.y = (screenCord.y + CanvasHeight/2) / CanvasHeight; 
+    
+    std::cerr << "NDC Coord:" << screenCord << std::endl;
+
+    /* Raster. */
+    PixelCorrdinate.x = screenCord.x * ImageWidth;
+    PixelCorrdinate.y = (1 - screenCord.y) * ImageHeight;
 }
 
 int main()
 {
+    Mat44f worldToCamera;
+
+#if 0
+    float canvasWidth = 1;
+    float canvasHeight = 1;
+#else
+    float canvasWidth = 2;
+    float canvasHeight = 2;
+#endif
+
+    uint32_t imageWidth = 512;
+    uint32_t imageHeight = 512;
+
+    Mat44f cameraToWorld(0.871214, 0, -0.490904, 0, -0.192902, 0.919559, -0.342346, 0, 0.451415, 0.392953, 0.801132, 0, 14.777467, 29.361945, 27.993464, 1);
+
+    worldToCamera = cameraToWorld.inverse();
+
+    std::ofstream ofs; 
+    ofs.open("./proj.svg"); 
+    ofs << "<svg version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns=\"http://www.w3.org/2000/svg\" height=\"512\" width=\"512\">" << std::endl; 
+    
+    for (int i = 0; i < numTris; i++)
+    {
+        Vec3f v0World = verts[tris[i * 3]];
+        Vec3f v1World = verts[tris[i * 3 + 1]];
+        Vec3f v2World = verts[tris[i * 3 + 2]];
+        Vec2i v0Raster;
+        Vec2i v1Raster;
+        Vec2i v2Raster;
+
+        computerPixelCoordinate(v0World, v0Raster, worldToCamera, canvasWidth, canvasHeight, imageWidth, imageHeight);
+        computerPixelCoordinate(v1World, v1Raster, worldToCamera, canvasWidth, canvasHeight, imageWidth, imageHeight);
+        computerPixelCoordinate(v2World, v2Raster, worldToCamera, canvasWidth, canvasHeight, imageWidth, imageHeight);
+        std::cerr << v0Raster << ", " << v1Raster << ", " << v2Raster << std::endl;
+        ofs << "<line x1=\"" << v0Raster.x << "\" y1=\"" << v0Raster.y << "\" x2=\"" << v1Raster.x << "\" y2=\"" << v1Raster.y << "\" style=\"stroke:rgb(0,0,0);stroke-width:1\" />\n";
+        ofs << "<line x1=\"" << v1Raster.x << "\" y1=\"" << v1Raster.y << "\" x2=\"" << v2Raster.x << "\" y2=\"" << v2Raster.y << "\" style=\"stroke:rgb(0,0,0);stroke-width:1\" />\n";
+        ofs << "<line x1=\"" << v2Raster.x << "\" y1=\"" << v2Raster.y << "\" x2=\"" << v0Raster.x << "\" y2=\"" << v0Raster.y << "\" style=\"stroke:rgb(0,0,0);stroke-width:1\" />\n";
+
+    }
+
+    ofs << "</svg>\n";
+    ofs.close();
+
+
     return 0;
 }

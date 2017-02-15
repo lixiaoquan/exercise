@@ -4,7 +4,7 @@ SRC_FILE := main.cpp
 
 .PHONY: all
 
-all : $(TARGET) prospproj
+all : prospproj
 
 $(TARGET) : $(SRC_FILE)
 	g++ -o $@ $^
