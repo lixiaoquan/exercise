@@ -28,12 +28,15 @@ const uint32_t tris[numTris * 3] = {
 32, 34, 33
 };
 
-void computerPixelCoordinate(
+bool computerPixelCoordinate(
     Vec3f &WorldCord,
     Vec2i &PixelCorrdinate,
     Mat44f &worldToCamera,
-    float &CanvasWidth,
-    float &CanvasHeight,
+    float &l,
+    float &b,
+    float &r,
+    float &t,
+    float &zNear,
     uint32_t &ImageWidth,
     uint32_t &ImageHeight
     )
@@ -41,6 +44,7 @@ void computerPixelCoordinate(
     /* Convert to camera space. */
     Vec3f cameraCord;
     Vec2f screenCord;
+    Vec2f ndcCord;
 
     std::cerr << "World Coord: " << WorldCord << std::endl;
 
@@ -48,43 +52,66 @@ void computerPixelCoordinate(
 
     std::cerr << "Camera Coord:" << cameraCord << std::endl;
 
-    screenCord.x = - cameraCord.x / cameraCord.z;
-    screenCord.y = - cameraCord.y / cameraCord.z;
+    screenCord.x = - cameraCord.x / cameraCord.z * zNear;
+    screenCord.y = - cameraCord.y / cameraCord.z * zNear;
 
     std::cerr << "Screen Coord:" << screenCord << std::endl;
 
     /* NDC. */
-    screenCord.x = (screenCord.x + CanvasWidth/2) / CanvasWidth; 
-    screenCord.y = (screenCord.y + CanvasHeight/2) / CanvasHeight; 
-    
-    std::cerr << "NDC Coord:" << screenCord << std::endl;
+    ndcCord.x = (screenCord.x + r) / (2 * r);
+    ndcCord.y = (screenCord.y + t) / (2 * t);
+
+    std::cerr << "NDC Coord:" << ndcCord << std::endl;
 
     /* Raster. */
-    PixelCorrdinate.x = screenCord.x * ImageWidth;
-    PixelCorrdinate.y = (1 - screenCord.y) * ImageHeight;
+    PixelCorrdinate.x = ndcCord.x * ImageWidth;
+    PixelCorrdinate.y = (1 - ndcCord.y) * ImageHeight;
+
+    if (screenCord.x >= l && screenCord.x <= r && screenCord.y >= b && screenCord.y <= t )
+        return true;
+
+    return false;
 }
 
 int main()
 {
     Mat44f worldToCamera;
 
-#if 0
-    float canvasWidth = 1;
-    float canvasHeight = 1;
-#else
+    float filmApertureWidth = 0.825;
+    float filmApertureHeight = 0.446;
+
+    float focalLength = 35; // mm
+
+    float zNear  = 0.1;
+    float zFar   = 1000;
+
     float canvasWidth = 2;
     float canvasHeight = 2;
-#endif
+
+    float right;
+    float left;
+    float top;
+    float bottom;
 
     uint32_t imageWidth = 512;
     uint32_t imageHeight = 512;
 
-    Mat44f cameraToWorld(0.871214, 0, -0.490904, 0, -0.192902, 0.919559, -0.342346, 0, 0.451415, 0.392953, 0.801132, 0, 14.777467, 29.361945, 27.993464, 1);
+    top = (filmApertureHeight * 25.4 / 2 / focalLength) * zNear;
+
+    bottom = -top;
+
+    right = (filmApertureWidth * 25.4 / 2 / focalLength) * zNear;
+
+    left = - right;
+
+    std::cerr << left << " " << bottom << " " << right <<  " " << top << std::endl;
+
+    Mat44f cameraToWorld(-0.95424, 0, 0.299041, 0, 0.0861242, 0.95763, 0.274823, 0, -0.28637, 0.288002, -0.913809, 0, -3.734612, 7.610426, -14.152769, 1);
 
     worldToCamera = cameraToWorld.inverse();
 
     std::ofstream ofs; 
-    ofs.open("./proj.svg"); 
+    ofs.open("./pinhole.svg"); 
     ofs << "<svg version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns=\"http://www.w3.org/2000/svg\" height=\"512\" width=\"512\">" << std::endl; 
     
     for (int i = 0; i < numTris; i++)
@@ -95,14 +122,41 @@ int main()
         Vec2i v0Raster;
         Vec2i v1Raster;
         Vec2i v2Raster;
+        bool v0Visiable;
+        bool v1Visiable;
+        bool v2Visiable;
 
-        computerPixelCoordinate(v0World, v0Raster, worldToCamera, canvasWidth, canvasHeight, imageWidth, imageHeight);
-        computerPixelCoordinate(v1World, v1Raster, worldToCamera, canvasWidth, canvasHeight, imageWidth, imageHeight);
-        computerPixelCoordinate(v2World, v2Raster, worldToCamera, canvasWidth, canvasHeight, imageWidth, imageHeight);
+        v0Visiable = computerPixelCoordinate(v0World, v0Raster, worldToCamera, left, bottom, right, top, zNear, imageWidth, imageHeight);
+        v1Visiable = computerPixelCoordinate(v1World, v1Raster, worldToCamera, left, bottom, right, top, zNear, imageWidth, imageHeight);
+        v2Visiable = computerPixelCoordinate(v2World, v2Raster, worldToCamera, left, bottom, right, top, zNear, imageWidth, imageHeight);
         std::cerr << v0Raster << ", " << v1Raster << ", " << v2Raster << std::endl;
-        ofs << "<line x1=\"" << v0Raster.x << "\" y1=\"" << v0Raster.y << "\" x2=\"" << v1Raster.x << "\" y2=\"" << v1Raster.y << "\" style=\"stroke:rgb(0,0,0);stroke-width:1\" />\n";
-        ofs << "<line x1=\"" << v1Raster.x << "\" y1=\"" << v1Raster.y << "\" x2=\"" << v2Raster.x << "\" y2=\"" << v2Raster.y << "\" style=\"stroke:rgb(0,0,0);stroke-width:1\" />\n";
-        ofs << "<line x1=\"" << v2Raster.x << "\" y1=\"" << v2Raster.y << "\" x2=\"" << v0Raster.x << "\" y2=\"" << v0Raster.y << "\" style=\"stroke:rgb(0,0,0);stroke-width:1\" />\n";
+
+        if (v0Visiable && v1Visiable)
+        {
+            ofs << "<line x1=\"" << v0Raster.x << "\" y1=\"" << v0Raster.y << "\" x2=\"" << v1Raster.x << "\" y2=\"" << v1Raster.y << "\" style=\"stroke:rgb(0,0,0);stroke-width:1\" />\n";
+        }
+        else
+        {
+            ofs << "<line x1=\"" << v0Raster.x << "\" y1=\"" << v0Raster.y << "\" x2=\"" << v1Raster.x << "\" y2=\"" << v1Raster.y << "\" style=\"stroke:rgb(0,0,255);stroke-width:1\" />\n";
+        }
+
+        if (v1Visiable && v2Visiable)
+        {
+            ofs << "<line x1=\"" << v1Raster.x << "\" y1=\"" << v1Raster.y << "\" x2=\"" << v2Raster.x << "\" y2=\"" << v2Raster.y << "\" style=\"stroke:rgb(0,0,0);stroke-width:1\" />\n";
+        }
+        else
+        {
+            ofs << "<line x1=\"" << v1Raster.x << "\" y1=\"" << v1Raster.y << "\" x2=\"" << v2Raster.x << "\" y2=\"" << v2Raster.y << "\" style=\"stroke:rgb(0,0,255);stroke-width:1\" />\n";
+        }
+
+        if (v0Visiable && v1Visiable)
+        {
+            ofs << "<line x1=\"" << v2Raster.x << "\" y1=\"" << v2Raster.y << "\" x2=\"" << v0Raster.x << "\" y2=\"" << v0Raster.y << "\" style=\"stroke:rgb(0,0,0);stroke-width:1\" />\n";
+        }
+        else
+        {
+            ofs << "<line x1=\"" << v2Raster.x << "\" y1=\"" << v2Raster.y << "\" x2=\"" << v0Raster.x << "\" y2=\"" << v0Raster.y << "\" style=\"stroke:rgb(0,0,255);stroke-width:1\" />\n";
+        }
 
     }
 

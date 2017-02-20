@@ -9,8 +9,8 @@ all : prospproj pinhole
 $(TARGET) : $(SRC_FILE)
 	g++ -o $@ $^
 
-prospproj : prospproj.o 
-	g++ $^ -o $@ 
+prospproj : prospproj.o
+	g++ $^ -o $@
 
 pinhole : pinhole.o
 	g++ $^ -o $@
@@ -19,6 +19,6 @@ pinhole : pinhole.o
 	g++ -c -o $@ $^ -std=c++11
 
 clean:
-	rm -f $(TARGET) *.o prospproj
+	rm -f $(TARGET) *.o prospproj pinhole
 
     
