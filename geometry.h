@@ -5,6 +5,7 @@ public:
     Type x,y,z;
 
     Vec3() {}
+    Vec3(Type X) : x(X), y(X), z(X) {}
     Vec3(Type X, Type Y, Type Z) : x(X), y(Y), z(Z) {}
 
     Vec3 operator + (Vec3 &V)
