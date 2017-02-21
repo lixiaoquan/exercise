@@ -93,14 +93,36 @@ int main()
     float top;
     float bottom;
 
+    float xscale = 1;
+    float yscale = 1;
+
     uint32_t imageWidth = 512;
     uint32_t imageHeight = 512;
 
+    float filmRatio = filmApertureWidth / filmApertureHeight;
+    float deviceRatio =  imageWidth / imageHeight;
+
+#if 1
+    if (filmRatio > deviceRatio)
+    {
+        xscale = deviceRatio / filmRatio;
+    }
+    else
+    {
+        yscale = deviceRatio / filmRatio;
+    }
+#endif
+
+
     top = (filmApertureHeight * 25.4 / 2 / focalLength) * zNear;
+
+    top *= yscale;
 
     bottom = -top;
 
     right = (filmApertureWidth * 25.4 / 2 / focalLength) * zNear;
+
+    right *= xscale;
 
     left = - right;
 
