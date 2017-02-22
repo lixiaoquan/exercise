@@ -10,28 +10,11 @@
 #include "geometry.h"
 #include "cow.h"
 
-/* Vertices data from lesson page. */
-const Vec3f verts[146] = { { -2.5703, 0.78053, -2.4e-05}, { -0.89264, 0.022582, 0.018577}, { 1.6878, -0.017131, 0.022032}, { 3.4659, 0.025667, 0.018577}, { -2.5703, 0.78969, -0.001202}, { -0.89264, 0.25121, 0.93573}, { 1.6878, 0.25121, 1.1097}, { 3.5031, 0.25293, 0.93573}, { -2.5703, 1.0558, -0.001347}, { -0.89264, 1.0558, 1.0487}, { 1.6878, 1.0558, 1.2437}, { 3.6342, 1.0527, 1.0487}, { -2.5703, 1.0558, 0}, { -0.89264, 1.0558, 0}, { 1.6878, 1.0558, 0}, { 3.6342, 1.0527, 0}, { -2.5703, 1.0558, 0.001347}, { -0.89264, 1.0558, -1.0487}, { 1.6878, 1.0558, -1.2437}, { 3.6342, 1.0527, -1.0487}, { -2.5703, 0.78969, 0.001202}, { -0.89264, 0.25121, -0.93573}, { 1.6878, 0.25121, -1.1097}, { 3.5031, 0.25293, -0.93573}, { 3.5031, 0.25293, 0}, { -2.5703, 0.78969, 0}, { 1.1091, 1.2179, 0}, { 1.145, 6.617, 0}, { 4.0878, 1.2383, 0}, { -2.5693, 1.1771, -0.081683}, { 0.98353, 6.4948, -0.081683}, { -0.72112, 1.1364, -0.081683}, { 0.9297, 6.454, 0}, { -0.7929, 1.279, 0}, { 0.91176, 1.2994, 0} }; 
+const int numTris = 3156;
 
-const int numTris = 51;
-
-const uint32_t tris[numTris * 3] = {
-4, 0, 5, 0, 1, 5, 1, 2, 5, 5, 2, 6, 3, 7, 2,
-2, 7, 6, 5, 9, 4, 4, 9, 8, 5, 6, 9, 9, 6, 10,
-7, 11, 6, 6, 11, 10, 9, 13, 8, 8, 13, 12, 10, 14, 9,
-9, 14, 13, 10, 11, 14, 14, 11, 15, 17, 16, 13, 12, 13, 16,
-13, 14, 17, 17, 14, 18, 15, 19, 14, 14, 19, 18, 16, 17, 20,
-20, 17, 21, 18, 22, 17, 17, 22, 21, 18, 19, 22, 22, 19, 23,
-20, 21, 0, 21, 1, 0, 22, 2, 21, 21, 2, 1, 22, 23, 2,
-2, 23, 3, 3, 23, 24, 3, 24, 7, 24, 23, 15, 15, 23, 19,
-24, 15, 7, 7, 15, 11, 0, 25, 20, 0, 4, 25, 20, 25, 16,
-16, 25, 12, 25, 4, 12, 12, 4, 8, 26, 27, 28, 29, 30, 31,
-32, 34, 33
-};
-
-bool computerPixelCoordinate(
+void computerPixelCoordinate(
     Vec3f &WorldCord,
-    Vec2i &PixelCorrdinate,
+    Vec3f &PixelCorrdinate,
     Mat44f &worldToCamera,
     float &l,
     float &b,
@@ -47,47 +30,59 @@ bool computerPixelCoordinate(
     Vec2f screenCord;
     Vec2f ndcCord;
 
-    std::cerr << "World Coord: " << WorldCord << std::endl;
+//    std::cerr << "World Coord: " << WorldCord << std::endl;
 
     worldToCamera.multiple(WorldCord, cameraCord);
 
-    std::cerr << "Camera Coord:" << cameraCord << std::endl;
+//    std::cerr << "Camera Coord:" << cameraCord << std::endl;
 
     screenCord.x = - cameraCord.x / cameraCord.z * zNear;
     screenCord.y = - cameraCord.y / cameraCord.z * zNear;
 
-    std::cerr << "Screen Coord:" << screenCord << std::endl;
+//    std::cerr << "Screen Coord:" << screenCord << std::endl;
 
-    /* NDC. */
-    ndcCord.x = (screenCord.x + r) / (2 * r);
-    ndcCord.y = (screenCord.y + t) / (2 * t);
+    /* NDC. [-1, 1]*/
+    ndcCord.x = 2 * screenCord.x / (r - l) - (r + l) / (r - l);
+    ndcCord.y = 2 * screenCord.y / (t - b) - (t + b) / (t - b);
 
-    std::cerr << "NDC Coord:" << ndcCord << std::endl;
+//    std::cerr << "NDC Coord:" << ndcCord << std::endl;
 
     /* Raster. */
-    PixelCorrdinate.x = ndcCord.x * ImageWidth;
-    PixelCorrdinate.y = (1 - ndcCord.y) * ImageHeight;
+    PixelCorrdinate.x = (ndcCord.x + 1) / 2 * ImageWidth;
+    PixelCorrdinate.y = (1 - ndcCord.y) / 2 * ImageHeight;
 
-    if (screenCord.x >= l && screenCord.x <= r && screenCord.y >= b && screenCord.y <= t )
-        return true;
-
-    return false;
+    PixelCorrdinate.z = - cameraCord.z;
 }
+
+float min3(float &a, float &b, float &c)
+{
+    return std::min(a, std::min(b, c));
+}
+
+float max3(float &a, float &b, float &c)
+{
+    return std::max(a, std::max(b, c));
+}
+
+float edgeFunction(Vec3f &a, Vec3f &b, Vec3f c)
+{
+    return (c[0] - a[0]) * (b[1] - a[1]) - (c[1] - a[1]) * (b[0] - a[0]);
+}
+
+#define PRINT 0
 
 int main()
 {
-    Mat44f worldToCamera;
 
-    float filmApertureWidth = 0.825;
-    float filmApertureHeight = 0.446;
+    float filmApertureWidth = 0.980;
+    float filmApertureHeight = 0.735;
 
-    float focalLength = 35; // mm
+    float focalLength = 20; // mm
 
-    float zNear  = 0.1;
+    float zNear  = 1;
     float zFar   = 1000;
-
-    float canvasWidth = 2;
-    float canvasHeight = 2;
+    float zSmallest = 0;
+    float zLargest = 1000;
 
     float right;
     float left;
@@ -97,13 +92,13 @@ int main()
     float xscale = 1;
     float yscale = 1;
 
-    uint32_t imageWidth = 512;
-    uint32_t imageHeight = 512;
+    uint32_t imageWidth = 640;
+    uint32_t imageHeight = 480;
 
     float filmRatio = filmApertureWidth / filmApertureHeight;
     float deviceRatio =  imageWidth / imageHeight;
 
-#if 1
+#if 0
     if (filmRatio > deviceRatio)
     {
         xscale = deviceRatio / filmRatio;
@@ -127,13 +122,15 @@ int main()
 
     left = - right;
 
-    std::cerr << left << " " << bottom << " " << right <<  " " << top << std::endl;
+#if PRINT
+    std::cerr << left << " " << bottom << " " << right <<  " " << top << " " << xscale << " " << yscale << std::endl;
+#endif
 
     Vec3<uint8_t> *frameBuffer = new Vec3<uint8_t>[imageHeight * imageWidth];
 
     float *depthBuffer = new float[imageHeight * imageWidth];
 
-    for (int i = 0; i = imageHeight * imageWidth; i++)
+    for (int i = 0; i < imageHeight * imageWidth; i++)
     {
         /* Reset framebuffer and depth. */
         frameBuffer[i] = Vec3<uint8_t>(255);
@@ -141,31 +138,198 @@ int main()
         depthBuffer[i] = zFar;
     }
 
-    Mat44f cameraToWorld(-0.95424, 0, 0.299041, 0, 0.0861242, 0.95763, 0.274823, 0, -0.28637, 0.288002, -0.913809, 0, -3.734612, 7.610426, -14.152769, 1);
+    Mat44f worldToCamera = {0.707107, -0.331295, 0.624695, 0, 0, 0.883452, 0.468521, 0, -0.707107, -0.331295, 0.624695, 0, -1.63871, -5.747777, -40.400412, 1};
 
-    worldToCamera = cameraToWorld.inverse();
-
-    for (int i = 0; i < numTris; i++)
+    /* Per triangle loop. */
+    int n = numTris;
+    //int n = 1;
+    for (int i = 0; i < n; i++)
     {
-        Vec3f v0World = verts[tris[i * 3]];
-        Vec3f v1World = verts[tris[i * 3 + 1]];
-        Vec3f v2World = verts[tris[i * 3 + 2]];
-        Vec2i v0Raster;
-        Vec2i v1Raster;
-        Vec2i v2Raster;
+        Vec3f v0World = vertices[nvertices[i * 3]];
+        Vec3f v1World = vertices[nvertices[i * 3 + 1]];
+        Vec3f v2World = vertices[nvertices[i * 3 + 2]];
+        Vec3f v0Raster;
+        Vec3f v1Raster;
+        Vec3f v2Raster;
+
         bool v0Visiable;
         bool v1Visiable;
         bool v2Visiable;
 
-        v0Visiable = computerPixelCoordinate(v0World, v0Raster, worldToCamera, left, bottom, right, top, zNear, imageWidth, imageHeight);
-        v1Visiable = computerPixelCoordinate(v1World, v1Raster, worldToCamera, left, bottom, right, top, zNear, imageWidth, imageHeight);
-        v2Visiable = computerPixelCoordinate(v2World, v2Raster, worldToCamera, left, bottom, right, top, zNear, imageWidth, imageHeight);
-        std::cerr << v0Raster << ", " << v1Raster << ", " << v2Raster << std::endl;
+        computerPixelCoordinate(v0World, v0Raster, worldToCamera, left, bottom, right, top, zNear, imageWidth, imageHeight);
+        computerPixelCoordinate(v1World, v1Raster, worldToCamera, left, bottom, right, top, zNear, imageWidth, imageHeight);
+        computerPixelCoordinate(v2World, v2Raster, worldToCamera, left, bottom, right, top, zNear, imageWidth, imageHeight);
+//        std::cerr << v0Raster << ", " << v1Raster << ", " << v2Raster << std::endl;
+
+        v0Raster.z = 1/v0Raster.z;
+        v1Raster.z = 1/v1Raster.z;
+        v2Raster.z = 1/v2Raster.z;
+
+        Vec2f st0 = st[stindices[i * 3]];
+        Vec2f st1 = st[stindices[i * 3 + 1]];
+        Vec2f st2 = st[stindices[i * 3 + 2]];
+
+        /* Prepare for interploation. */
+        st0 *= v0Raster.z;
+        st1 *= v1Raster.z;
+        st2 *= v2Raster.z;
+
+        /* Find bounding box. */
+        float xmin = min3(v0Raster.x, v1Raster.x, v2Raster.x);
+        float ymin = min3(v0Raster.y, v1Raster.y, v2Raster.y);
+        float xmax = max3(v0Raster.x, v1Raster.x, v2Raster.x);
+        float ymax = max3(v0Raster.y, v1Raster.y, v2Raster.y);
+
+        if (xmin < 0 || ymin < 0 || xmax > imageWidth - 1 || ymax > imageHeight - 1)
+        {
+            continue;
+        }
+
+//        std::cerr << "Bounding box : " << xmin << ymin << xmax << ymax << std::endl;
+
+        uint32_t xstart = std::max(int32_t(0), (int32_t)std::floor(xmin));
+        uint32_t xend   = std::min(int32_t(imageWidth - 1), (int32_t)std::floor(xmax));
+        uint32_t ystart = std::max(int32_t(0), (int32_t)std::floor(ymin));
+        uint32_t yend   = std::min(int32_t(imageHeight - 1), (int32_t)std::floor(ymax));
+
+        float area = edgeFunction(v0Raster, v1Raster, v2Raster);
+
+//        printf("%f %f %f area=%f\n", v0Raster.z, v1Raster.z, v2Raster.z, area);
+
+        for (uint32_t y = ystart; y <= yend; y++)
+        {
+            for (uint32_t x = xstart; x <= xend; x++)
+            {
+                Vec3f pos (x + 0.5, y + 0.5, 0);
+                float w0 = edgeFunction(v1Raster, v2Raster, pos);
+                float w1 = edgeFunction(v2Raster, v0Raster, pos);
+                float w2 = edgeFunction(v0Raster, v1Raster, pos);
+
+                if (w0 >= 0 && w1 >=0 && w2 >=0)
+                {
+                    w0 /= area;
+                    w1 /= area;
+                    w2 /= area;
+
+                    float z = 1 / (w0 * v0Raster.z + w1 * v1Raster.z + w2 * v2Raster.z);
+
+#if PRINT
+                    printf("%f %f %f z = %f\n", w0, w1, w2, z);
+#endif
+
+                    if (z < depthBuffer[y * imageWidth + x])
+                    {
+                        /* Check z buffer. */
+                        depthBuffer[y * imageWidth + x] = z;
+
+                        if (zSmallest == 0.f)
+                        {
+                            zSmallest = z;
+                        }
+
+                        if (zLargest == 1000.f)
+                        {
+                            zLargest = z;
+                        }
+
+                        zSmallest = std::min(z, zSmallest);
+                        zLargest = std::max(z, zLargest);
+
+
+                        /* interploated attribute. */
+                        Vec2f st = (st0 * w0 + st1 * w1 + st2 * w2) * z;
+
+#if PRINT
+                        std::cerr << st0 * w0 << " " << " " <<  st1 * w1 << " " << st2 * w2 << std::endl;
+                        std::cerr << (st0 * w0 + st1 * w1 + st2 * w2) << std::endl;
+                        std::cerr << st0 << " " << " " <<  st1 << " " << st2 << " " << " st: " << st << std::endl;
+#endif
+
+                        /* Shading. */
+
+                        /* Get camera space coordinate. */
+                        Vec3f v0Cam, v1Cam, v2Cam;
+
+                        worldToCamera.multiple(v0World, v0Cam);
+                        worldToCamera.multiple(v1World, v1Cam);
+                        worldToCamera.multiple(v2World, v2Cam);
+
+                        float px = (v0Cam.x / -v0Cam.z) * w0 + (v1Cam.x / -v1Cam.z) * w1 + (v2Cam.x / -v2Cam.z) * w2;
+                        float py = (v0Cam.y / -v0Cam.z) * w0 + (v1Cam.y / -v1Cam.z) * w1 + (v2Cam.y / -v2Cam.z) * w2;
+
+                        Vec3f pt(px * z, py * z, -z);
+
+#if PRINT
+                        std::cerr << "pt: " << pt << std::endl;
+#endif
+
+                        Vec3f n = (v1Cam - v0Cam).crossProduct(v2Cam - v0Cam);
+                        n.normalize();
+
+#if PRINT
+                        std::cerr << "n: " << n << std::endl;
+#endif
+
+                        Vec3f viewDirection = -pt;
+                        viewDirection.normalize();
+
+#if PRINT
+                        std::cerr << "viewDirection " << viewDirection << std::endl;
+#endif
+
+                        float nDotView = std::max(0.f, n.dot(viewDirection));
+
+                        const int M = 10; 
+                        float checker = (fmod(st.x * M, 1.0) > 0.5) ^ (fmod(st.y * M, 1.0) < 0.5);
+                        float c = 0.3 * (1 - checker) + 0.7 * checker;
+                        nDotView *= c;
+
+#if PRINT
+                        printf("%f c= %f\n", nDotView, c);
+#endif
+
+                        uint8_t color = (uint8_t)(nDotView * 255);
+
+                        frameBuffer[y * imageWidth + x] = {color, color, color};
+
+#if PRINT
+                        printf("color= %d\n", frameBuffer[y * imageWidth + x].x);
+#endif
+
+                    }
+                }
+            }
+        }
     }
 
+    std::ofstream ofs;
+    ofs.open("./output.ppm");
+    ofs << "P6\n" << imageWidth << " " << imageHeight << "\n255\n";
+    ofs.write((char*)frameBuffer, imageWidth * imageHeight * 3);
+    ofs.close();
 
-    delete frameBuffer;
-    delete depthBuffer;
+    printf("Depth range : %f %f\n", zSmallest, zLargest);
+    for (int i = 0; i < imageHeight * imageWidth; i++)
+    {
+        /* Reset framebuffer and depth. */
+        if (depthBuffer[i] > 255)
+        {
+            frameBuffer[i] = Vec3<uint8_t>(255);
+        }
+        else
+        {
+            frameBuffer[i] = Vec3<uint8_t>(((depthBuffer[i] - zSmallest)/ (zLargest - zSmallest)) * 255);
+        }
+    }
+
+    ofs.open("./depth.ppm");
+    ofs << "P6\n" << imageWidth << " " << imageHeight << "\n255\n";
+    ofs.write((char*)frameBuffer, imageWidth * imageHeight * 3);
+    ofs.close();
+
+
+    delete [] frameBuffer;
+    delete [] depthBuffer;
 
     return 0;
 }

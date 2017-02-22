@@ -4,13 +4,23 @@ class Vec3 {
 public:
     Type x,y,z;
 
-    Vec3() {}
+    Vec3() : x(Type(0)), y(Type(0)), z(Type(0)) {}
     Vec3(Type X) : x(X), y(X), z(X) {}
     Vec3(Type X, Type Y, Type Z) : x(X), y(Y), z(Z) {}
 
     Vec3 operator + (Vec3 &V)
     {
-        return Vec3(x + V.x, y + V.y, z + V.z); 
+        return Vec3(x + V.x, y + V.y, z + V.z);
+    }
+
+    Vec3<Type> operator - (Vec3<Type> &V)
+    {
+        return Vec3<Type>(x - V.x, y - V.y, z - V.z);
+    }
+
+    Vec3<Type> operator - ()
+    {
+        return Vec3<Type>(-x, -y, -z);
     }
 
     Type operator [] (int i)
@@ -22,6 +32,36 @@ public:
     {
         return S << '[' << V.x << ' ' << V.y << ' ' << V.z << ']';
     }
+
+    Vec3<Type> crossProduct(Vec3<Type> V)
+    {
+        return Vec3<Type>(
+                y*V.z - z*V.y,
+                z*V.x - x*V.z,
+                x*V.y - y*V.x
+                );
+    }
+
+    Type dot(Vec3<Type> &V)
+    {
+        return x * V.x + y * V.y + z * V.z;
+    }
+
+    Vec3<Type> & normalize()
+    {
+        Type n = dot(*this);
+
+        if (n > 0)
+        {
+            Type factor = 1 / sqrt(n);
+
+            x *= factor;
+            y *= factor;
+            z *= factor;
+        }
+
+        return *this;
+    }
 };
 
 template<typename Type>
@@ -30,10 +70,32 @@ class Vec2 {
 public:
     Type x,y,z;
 
+    Vec2() {}
+    Vec2(Type X, Type Y) : x(X), y(Y) {}
+
     friend std::ostream& operator << (std::ostream &S, const Vec2<Type> &V)
     {
         return S << '[' << V.x << ' ' << V.y << ']';
     }
+
+    Vec2& operator *= (Type t)
+    {
+        x *= t;
+        y *= t;
+
+        return *this;
+    }
+
+    Vec2 operator * (Type t)
+    {
+        return Vec2<Type>(x * t, y * t);
+    }
+
+    Vec2 operator + (Vec2<Type> V)
+    {
+        return Vec2<Type>(x + V.x, y + V.y);
+    }
+
 };
 
 template<typename Type>
