@@ -235,60 +235,90 @@ int main()
                         zSmallest = std::min(z, zSmallest);
                         zLargest = std::max(z, zLargest);
 
+                        float colorA = 0.f;
+                        int colorN = 0;
 
-                        /* interploated attribute. */
-                        Vec2f st = (st0 * w0 + st1 * w1 + st2 * w2) * z;
+                        for (uint32_t p = 0; p < 4; p++)
+                        {
+                            Vec2f sub[4] = {{0.25, 0.25}, {0.75, 0.25}, {0.25, 0.75}, {0.75, 0.75}};
 
-#if PRINT
-                        std::cerr << st0 * w0 << " " << " " <<  st1 * w1 << " " << st2 * w2 << std::endl;
-                        std::cerr << (st0 * w0 + st1 * w1 + st2 * w2) << std::endl;
-                        std::cerr << st0 << " " << " " <<  st1 << " " << st2 << " " << " st: " << st << std::endl;
-#endif
+                            Vec3f pos (x + sub[p].x, y + sub[p].y, 0);
+                            float w0 = edgeFunction(v1Raster, v2Raster, pos);
+                            float w1 = edgeFunction(v2Raster, v0Raster, pos);
+                            float w2 = edgeFunction(v0Raster, v1Raster, pos);
 
-                        /* Shading. */
+                            if (w0 < 0 && w1 < 0 && w2 < 0)
+                            {
+                                continue;
+                            }
 
-                        /* Get camera space coordinate. */
-                        Vec3f v0Cam, v1Cam, v2Cam;
+                            colorN++;
 
-                        worldToCamera.multiple(v0World, v0Cam);
-                        worldToCamera.multiple(v1World, v1Cam);
-                        worldToCamera.multiple(v2World, v2Cam);
+                            w0 /= area;
+                            w1 /= area;
+                            w2 /= area;
 
-                        float px = (v0Cam.x / -v0Cam.z) * w0 + (v1Cam.x / -v1Cam.z) * w1 + (v2Cam.x / -v2Cam.z) * w2;
-                        float py = (v0Cam.y / -v0Cam.z) * w0 + (v1Cam.y / -v1Cam.z) * w1 + (v2Cam.y / -v2Cam.z) * w2;
-
-                        Vec3f pt(px * z, py * z, -z);
-
-#if PRINT
-                        std::cerr << "pt: " << pt << std::endl;
-#endif
-
-                        Vec3f n = (v1Cam - v0Cam).crossProduct(v2Cam - v0Cam);
-                        n.normalize();
+                            /* interploated attribute. */
+                            Vec2f st = (st0 * w0 + st1 * w1 + st2 * w2) * z;
 
 #if PRINT
-                        std::cerr << "n: " << n << std::endl;
+                            std::cerr << st0 * w0 << " " << " " <<  st1 * w1 << " " << st2 * w2 << std::endl;
+                            std::cerr << (st0 * w0 + st1 * w1 + st2 * w2) << std::endl;
+                            std::cerr << st0 << " " << " " <<  st1 << " " << st2 << " " << " st: " << st << std::endl;
 #endif
 
-                        Vec3f viewDirection = -pt;
-                        viewDirection.normalize();
+                            /* Shading. */
+
+                            /* Get camera space coordinate. */
+                            Vec3f v0Cam, v1Cam, v2Cam;
+
+                            worldToCamera.multiple(v0World, v0Cam);
+                            worldToCamera.multiple(v1World, v1Cam);
+                            worldToCamera.multiple(v2World, v2Cam);
+
+                            float px = (v0Cam.x / -v0Cam.z) * w0 + (v1Cam.x / -v1Cam.z) * w1 + (v2Cam.x / -v2Cam.z) * w2;
+                            float py = (v0Cam.y / -v0Cam.z) * w0 + (v1Cam.y / -v1Cam.z) * w1 + (v2Cam.y / -v2Cam.z) * w2;
+
+                            Vec3f pt(px * z, py * z, -z);
 
 #if PRINT
-                        std::cerr << "viewDirection " << viewDirection << std::endl;
+                            std::cerr << "pt: " << pt << std::endl;
 #endif
 
-                        float nDotView = std::max(0.f, n.dot(viewDirection));
-
-                        const int M = 10; 
-                        float checker = (fmod(st.x * M, 1.0) > 0.5) ^ (fmod(st.y * M, 1.0) < 0.5);
-                        float c = 0.3 * (1 - checker) + 0.7 * checker;
-                        nDotView *= c;
+                            Vec3f n = (v1Cam - v0Cam).crossProduct(v2Cam - v0Cam);
+                            n.normalize();
 
 #if PRINT
-                        printf("%f c= %f\n", nDotView, c);
+                            std::cerr << "n: " << n << std::endl;
 #endif
 
-                        uint8_t color = (uint8_t)(nDotView * 255);
+                            Vec3f viewDirection = -pt;
+                            viewDirection.normalize();
+
+#if PRINT
+                            std::cerr << "viewDirection " << viewDirection << std::endl;
+#endif
+
+                            float nDotView = std::max(0.f, n.dot(viewDirection));
+
+                            const int M = 10; 
+                            float checker = (fmod(st.x * M, 1.0) > 0.5) ^ (fmod(st.y * M, 1.0) < 0.5);
+                            float c = 0.3 * (1 - checker) + 0.7 * checker;
+                            nDotView *= c;
+
+                            colorA += nDotView;
+                        }
+
+                        if (colorN)
+                        {
+                            colorA /= colorN;
+                        }
+
+#if PRINT
+                        printf("%f c= %f\n", colorA, c);
+#endif
+
+                        uint8_t color = (uint8_t)(colorA * 255);
 
                         frameBuffer[y * imageWidth + x] = {color, color, color};
 
