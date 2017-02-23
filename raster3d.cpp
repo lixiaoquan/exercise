@@ -14,6 +14,7 @@ const int numTris = 3156;
 
 void computerPixelCoordinate(
     Vec3f &WorldCord,
+    Vec3f &CameraCord,
     Vec3f &PixelCorrdinate,
     Mat44f &worldToCamera,
     float &l,
@@ -33,6 +34,8 @@ void computerPixelCoordinate(
 //    std::cerr << "World Coord: " << WorldCord << std::endl;
 
     worldToCamera.multiple(WorldCord, cameraCord);
+
+    CameraCord = cameraCord;
 
 //    std::cerr << "Camera Coord:" << cameraCord << std::endl;
 
@@ -122,6 +125,8 @@ int main()
 
     left = - right;
 
+    float cullAngle = 130;
+
 #if PRINT
     std::cerr << left << " " << bottom << " " << right <<  " " << top << " " << xscale << " " << yscale << std::endl;
 #endif
@@ -142,7 +147,7 @@ int main()
 
     /* Per triangle loop. */
     int n = numTris;
-    //int n = 1;
+    int culled = 0;
     for (int i = 0; i < n; i++)
     {
         Vec3f v0World = vertices[nvertices[i * 3]];
@@ -151,15 +156,29 @@ int main()
         Vec3f v0Raster;
         Vec3f v1Raster;
         Vec3f v2Raster;
+        Vec3f v0Cam, v1Cam, v2Cam;
 
         bool v0Visiable;
         bool v1Visiable;
         bool v2Visiable;
 
-        computerPixelCoordinate(v0World, v0Raster, worldToCamera, left, bottom, right, top, zNear, imageWidth, imageHeight);
-        computerPixelCoordinate(v1World, v1Raster, worldToCamera, left, bottom, right, top, zNear, imageWidth, imageHeight);
-        computerPixelCoordinate(v2World, v2Raster, worldToCamera, left, bottom, right, top, zNear, imageWidth, imageHeight);
+        computerPixelCoordinate(v0World, v0Cam, v0Raster, worldToCamera, left, bottom, right, top, zNear, imageWidth, imageHeight);
+        computerPixelCoordinate(v1World, v1Cam, v1Raster, worldToCamera, left, bottom, right, top, zNear, imageWidth, imageHeight);
+        computerPixelCoordinate(v2World, v2Cam, v2Raster, worldToCamera, left, bottom, right, top, zNear, imageWidth, imageHeight);
 //        std::cerr << v0Raster << ", " << v1Raster << ", " << v2Raster << std::endl;
+
+        /*==== Back face culling. ===*/
+        Vec3f n = (v1Cam - v0Cam).crossProduct(v2Cam - v0Cam);
+        n.normalize();
+
+        Vec3f viewDir = - v0Cam;
+        viewDir.normalize();
+
+        if (viewDir.dot(n) < cos(cullAngle * 3.1415926/180))
+        {
+            culled++;
+            continue;
+        }
 
         v0Raster.z = 1/v0Raster.z;
         v1Raster.z = 1/v1Raster.z;
@@ -270,7 +289,6 @@ int main()
                             /* Shading. */
 
                             /* Get camera space coordinate. */
-                            Vec3f v0Cam, v1Cam, v2Cam;
 
                             worldToCamera.multiple(v0World, v0Cam);
                             worldToCamera.multiple(v1World, v1Cam);
@@ -338,7 +356,7 @@ int main()
     ofs.write((char*)frameBuffer, imageWidth * imageHeight * 3);
     ofs.close();
 
-    printf("Depth range : %f %f\n", zSmallest, zLargest);
+    printf("Depth range : %f %f culled = %d\n", zSmallest, zLargest, culled);
     for (int i = 0; i < imageHeight * imageWidth; i++)
     {
         /* Reset framebuffer and depth. */
