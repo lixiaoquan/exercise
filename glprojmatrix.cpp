@@ -15,22 +15,44 @@
 #define M_PI 3.14159265
 #endif
 
-void setProjectionMatrix(
+void glFrustum(
     Mat44f &M,
-    float &angleOfView,
-    float &far,
-    float &near
+    float &b,
+    float &t,
+    float &l,
+    float &r,
+    float &near,
+    float &far
     )
 {
-    float scale = 1 / tan(angleOfView * 0.5 * M_PI / 180);
+    M[0][0] = 2 * near / (r - l);
+    M[0][1] = M[0][1] = M[0][3] = 0;
 
-    M[0][0] = M[1][1] = scale;
+    M[1][1] = 2 * near / (t - b);
+    M[1][0] = M[1][2] = M[1][3] = 0;
 
-    M[2][2] = - far / (far -near);
-    M[3][2] = - far*near / (far -near);
-
+    M[2][0] = (r + l) / (r - l);
+    M[2][1] = (t + b) / (t - b);
+    M[2][2] = - (far + near) / (far - near);
     M[2][3] = -1;
+
+    M[3][0] = 0;
+    M[3][1] = 0;
+    M[3][2] = - 2 * far * near / (far -near);
     M[3][3] = 0;
+}
+
+void gluPerspective(
+    float &angleOfView,
+    float imageAspectRatio,
+    float &near, float &far,
+    float &b, float &t, float &l, float &r
+    )
+{
+    t = near * tan(angleOfView * 0.5 * M_PI / 180);
+    r = imageAspectRatio * t;
+    l = -r;
+    b = -t;
 }
 
 int main()
@@ -45,19 +67,14 @@ int main()
     float angleOfView  = 90;
     float near = 0.1;
     float far = 100;
-
-    setProjectionMatrix(Mproj, angleOfView, far, near);
-
-#if 0
-    float canvasWidth = 1;
-    float canvasHeight = 1;
-#else
-    float canvasWidth = 2;
-    float canvasHeight = 2;
-#endif
+    float b, t, l, r=0;
 
     uint32_t imageWidth = 512;
     uint32_t imageHeight = 512;
+
+    gluPerspective(angleOfView, imageWidth / (float)imageHeight, near, far, b, t, l, r);
+
+    glFrustum(Mproj, b, t, l, r, near, far);
 
     uint8_t *buffer = new uint8_t[imageWidth * imageHeight];
 
