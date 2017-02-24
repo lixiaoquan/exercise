@@ -221,9 +221,18 @@ public:
         c = Vec[0] * x[0][2] + Vec[1] * x[1][2] + Vec[2] * x[2][2] + x[3][2];
         w = Vec[0] * x[0][3] + Vec[1] * x[1][3] + Vec[2] * x[2][3] + x[3][3];
 
-        Result.x = a/w;
-        Result.y = b/w;
-        Result.z = c/w;
+        if (w != 1)
+        {
+            Result.x = a/w;
+            Result.y = b/w;
+            Result.z = c/w;
+        }
+        else
+        {
+            Result.x = a;
+            Result.y = b;
+            Result.z = c;
+        }
     }
 
     Type* operator[] (int i)
