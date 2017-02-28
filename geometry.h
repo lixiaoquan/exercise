@@ -8,7 +8,7 @@ public:
     Vec3(Type X) : x(X), y(X), z(X) {}
     Vec3(Type X, Type Y, Type Z) : x(X), y(Y), z(Z) {}
 
-    Vec3 operator + (Vec3 &V)
+    Vec3<Type> operator + (const Vec3<Type> &V)
     {
         return Vec3(x + V.x, y + V.y, z + V.z);
     }
@@ -16,6 +16,11 @@ public:
     Vec3<Type> operator - (Vec3<Type> &V)
     {
         return Vec3<Type>(x - V.x, y - V.y, z - V.z);
+    }
+
+    Vec3<Type> operator * (Type m)
+    {
+        return Vec3<Type>(x * m, y * m, z * m);
     }
 
     Vec3<Type> operator - ()
@@ -210,7 +215,7 @@ public:
         return s; 
     }
 
-    void multiple(Vec3<Type> &Vec, Vec3<Type> &Result)
+    void multiple(Vec3<Type> Vec, Vec3<Type> &Result)
     {
         /* Vec * Mat44*/
 

@@ -1,4 +1,4 @@
-TARGET  := prospproj pinhole raster3d projmatrix glprojmatrix glorthoprojmatrix
+TARGET  := prospproj pinhole raster3d projmatrix glprojmatrix glorthoprojmatrix camerarays
 
 SRC_FILE := main.cpp
 
