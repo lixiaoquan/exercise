@@ -13,17 +13,17 @@ public:
         return Vec3(x + V.x, y + V.y, z + V.z);
     }
 
-    Vec3<Type> operator - (Vec3<Type> &V)
+    Vec3 operator - (const Vec3 &V) const
     {
-        return Vec3<Type>(x - V.x, y - V.y, z - V.z);
+        return Vec3(x - V.x, y - V.y, z - V.z);
     }
 
-    Vec3<Type> operator * (Type m)
+    Vec3 operator * (const Type &m) const
     {
-        return Vec3<Type>(x * m, y * m, z * m);
+        return Vec3(x * m, y * m, z * m);
     }
 
-    Vec3<Type> operator - ()
+    Vec3<Type> operator - () const
     {
         return Vec3<Type>(-x, -y, -z);
     }
@@ -47,7 +47,7 @@ public:
                 );
     }
 
-    Type dot(Vec3<Type> &V)
+    Type dot(Vec3<Type> &V) const
     {
         return x * V.x + y * V.y + z * V.z;
     }
@@ -238,6 +238,21 @@ public:
             Result.y = b;
             Result.z = c;
         }
+    }
+
+    void multDirMatrix(Vec3<Type> Vec, Vec3<Type> &Result)
+    {
+        /* Dir * Mat44*/
+
+        Type a, b, c;
+
+        a = Vec[0] * x[0][0] + Vec[1] * x[1][0] + Vec[2] * x[2][0];
+        b = Vec[0] * x[0][1] + Vec[1] * x[1][1] + Vec[2] * x[2][1];
+        c = Vec[0] * x[0][2] + Vec[1] * x[1][2] + Vec[2] * x[2][2];
+
+        Result.x = a;
+        Result.y = b;
+        Result.z = c;
     }
 
     Type* operator[] (int i)
