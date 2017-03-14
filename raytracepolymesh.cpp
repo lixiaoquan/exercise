@@ -203,9 +203,9 @@ public:
                 trisIndex[l] = vertsIndex[k];
                 trisIndex[l + 1] = vertsIndex[k + j + 1];
                 trisIndex[l + 2] = vertsIndex[k + j + 2];
-                N[l] = normals[k];
-                N[l + 1] = normals[k + j + 1];
-                N[l + 2] = normals[k + j + 2];
+                N[l] = normals[vertsIndex[k]];
+                N[l + 1] = normals[vertsIndex[k + j + 1]];
+                N[l + 2] = normals[vertsIndex[k + j + 2]];
                 texCoordinates[l] = st[vertsIndex[k]];
                 texCoordinates[l + 1] = st[vertsIndex[k + j + 1]];
                 texCoordinates[l + 2] = st[vertsIndex[k + j + 2]];
