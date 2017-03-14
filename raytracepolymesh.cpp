@@ -3,6 +3,7 @@
 #include <cstdlib> 
 #include <cstdio> 
 #include <fstream> 
+#include <sstream> 
 #include <cmath> 
 #include <iomanip> 
 #include <limits> 
@@ -267,6 +268,11 @@ public:
         //cerr << st0 << st1 << st2 << uv << endl;
         hitTextureCoordinates = (1 - uv.x - uv.y) * st0 + uv.x * st1 + uv.y * st2;
 
+        Vec3f &n0 = N[triIndex * 3];
+        Vec3f &n1 = N[triIndex * 3 + 1];
+        Vec3f &n2 = N[triIndex * 3 + 2];
+        hitNormal = (1 - uv.x - uv.y) * n0 + uv.x * n1 + uv.y * n2;
+
     }
     uint32_t numTris;
 
@@ -276,6 +282,72 @@ public:
     unique_ptr<Vec2f []> texCoordinates;
 
 };
+
+TriangleMash *loadPolyMeshFromFile(const char * file)
+{
+    ifstream ifs;
+
+    try
+    {
+
+        ifs.open(file);
+
+        if (ifs.fail())
+        {
+            throw;
+        }
+
+        stringstream ss;
+        ss << ifs.rdbuf();
+
+        uint32_t numFaces;
+
+        ss >> numFaces;
+
+        unique_ptr<uint32_t []> faceIndex(new uint32_t[numFaces]);
+
+        uint32_t vertsIndexArraySize = 0;
+
+        for (int i = 0; i < numFaces; i++)
+        {
+            ss >> faceIndex[i];
+
+            vertsIndexArraySize += faceIndex[i];
+        }
+
+
+    std::unique_ptr<uint32_t []> vertsIndex(new uint32_t[vertsIndexArraySize]);
+    uint32_t vertsArraySize = 0; // reading vertex index array 
+    for (uint32_t i = 0; i < vertsIndexArraySize; ++i) { 
+        ss >> vertsIndex[i]; 
+        if (vertsIndex[i] > vertsArraySize) 
+        vertsArraySize = vertsIndex[i]; 
+        } 
+        
+        vertsArraySize += 1; // reading vertices 
+        std::unique_ptr<Vec3f []> verts(new Vec3f[vertsArraySize]); 
+        for (uint32_t i = 0; i < vertsArraySize; ++i) 
+        { ss >> verts[i].x >> verts[i].y >> verts[i].z; } // reading normals 
+        
+        std::unique_ptr<Vec3f []> normals(new Vec3f[vertsIndexArraySize]); 
+        for (uint32_t i = 0; i < vertsIndexArraySize; ++i) { 
+        ss >> normals[i].x >> normals[i].y >> normals[i].z; } // reading st coordinates 
+        
+        std::unique_ptr<Vec2f []> st(new Vec2f[vertsIndexArraySize]); 
+        for (uint32_t i = 0; i < vertsIndexArraySize; ++i) { ss >> st[i].x >> st[i].y; }
+
+    return new TriangleMash(numFaces, faceIndex, vertsIndex, verts, normals, st);
+
+    }
+    catch(...)
+    {
+    
+    }
+
+    ifs.close();
+
+    return nullptr;
+}
 
 TriangleMash * generatePolyMesh(float rad, uint32_t divs)
 {
@@ -495,10 +567,16 @@ int main()
 {
     vector<unique_ptr<Object>> objects;
     vector<unique_ptr<Object>> lights;
-
+#if 0
     TriangleMash *mesh = generatePolyMesh(10, 100);
 
+#else
+    TriangleMash *mesh = loadPolyMeshFromFile("./cow.geo");
+#endif
     objects.push_back(unique_ptr<Object>(mesh));
+
+
+
 
     auto timeStart = chrono::high_resolution_clock::now();
 

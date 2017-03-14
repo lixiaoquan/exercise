@@ -33,6 +33,11 @@ public:
         return Vec3(m * V.x, m * V.y, m * V.z);
     }
 
+    friend Vec3 operator * (const Type &m, Vec3 &V)
+    {
+        return Vec3(m * V.x, m * V.y, m * V.z);
+    }
+
     Vec3<Type> operator - () const
     {
         return Vec3<Type>(-x, -y, -z);
