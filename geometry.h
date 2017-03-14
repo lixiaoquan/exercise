@@ -28,6 +28,11 @@ public:
         return Vec3(m / V.x, m / V.y, m / V.z);
     }
 
+    friend Vec3 operator * (Vec3 &V, const Type &m)
+    {
+        return Vec3(m * V.x, m * V.y, m * V.z);
+    }
+
     Vec3<Type> operator - () const
     {
         return Vec3<Type>(-x, -y, -z);
@@ -80,7 +85,7 @@ class Vec2 {
 public:
     Type x,y,z;
 
-    Vec2() {}
+    Vec2() : x(0), y(0) {}
     Vec2(Type X, Type Y) : x(X), y(Y) {}
 
     friend std::ostream& operator << (std::ostream &S, const Vec2<Type> &V)
@@ -99,6 +104,11 @@ public:
     Vec2 operator * (Type t)
     {
         return Vec2<Type>(x * t, y * t);
+    }
+
+    friend Vec2 operator * (const Type &m, Vec2 &V)
+    {
+        return Vec2(m * V.x, m * V.y);
     }
 
     Vec2 operator + (Vec2<Type> V)
