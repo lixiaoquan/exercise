@@ -21,6 +21,7 @@
 #endif
 
 #define CULLING 1
+//#define SPHERE
 
 using namespace std;
 random_device rd;
@@ -204,12 +205,22 @@ public:
                 trisIndex[l] = vertsIndex[k];
                 trisIndex[l + 1] = vertsIndex[k + j + 1];
                 trisIndex[l + 2] = vertsIndex[k + j + 2];
+#ifdef SPHERE
                 N[l] = normals[vertsIndex[k]];
                 N[l + 1] = normals[vertsIndex[k + j + 1]];
                 N[l + 2] = normals[vertsIndex[k + j + 2]];
                 texCoordinates[l] = st[vertsIndex[k]];
                 texCoordinates[l + 1] = st[vertsIndex[k + j + 1]];
                 texCoordinates[l + 2] = st[vertsIndex[k + j + 2]];
+#else
+               N[l] = normals[k];
+                N[l + 1] = normals[k + j + 1];
+                N[l + 2] = normals[k + j + 2];
+                texCoordinates[l] = st[k];
+                texCoordinates[l + 1] = st[k + j + 1];
+                texCoordinates[l + 2] = st[k + j + 2];
+
+#endif
 
                 //std::cerr << l << " " <<k << " " << j <<  " " << texCoordinates[l] << texCoordinates[l + 1] << texCoordinates[l + 2] << std::endl;
 
@@ -268,10 +279,12 @@ public:
         //cerr << st0 << st1 << st2 << uv << endl;
         hitTextureCoordinates = (1 - uv.x - uv.y) * st0 + uv.x * st1 + uv.y * st2;
 
+#ifndef SPHERE
         Vec3f &n0 = N[triIndex * 3];
         Vec3f &n1 = N[triIndex * 3 + 1];
         Vec3f &n2 = N[triIndex * 3 + 2];
         hitNormal = (1 - uv.x - uv.y) * n0 + uv.x * n1 + uv.y * n2;
+#endif
 
     }
     uint32_t numTris;
@@ -567,9 +580,8 @@ int main()
 {
     vector<unique_ptr<Object>> objects;
     vector<unique_ptr<Object>> lights;
-#if 0
+#ifdef SPHERE
     TriangleMash *mesh = generatePolyMesh(10, 100);
-
 #else
     TriangleMash *mesh = loadPolyMeshFromFile("./cow.geo");
 #endif
