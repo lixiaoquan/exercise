@@ -219,7 +219,7 @@ public:
 #else
                 transformNormals.multDirMatrix(normals[k], N[l]);
                 transformNormals.multDirMatrix(normals[k + j + 1], N[l + 1]);
-                transformNormals.multDirMatrix(normals[k + j + 1], N[l + 2]);
+                transformNormals.multDirMatrix(normals[k + j + 2], N[l + 2]);
                 N[l].normalize();
                 N[l + 1].normalize();
                 N[l + 2].normalize();
