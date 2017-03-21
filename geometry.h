@@ -8,9 +8,18 @@ public:
     Vec3(Type X) : x(X), y(X), z(X) {}
     Vec3(Type X, Type Y, Type Z) : x(X), y(Y), z(Z) {}
 
-    Vec3<Type> operator + (const Vec3<Type> &V)
+    Vec3<Type> operator + (const Vec3<Type> &V) const
     {
         return Vec3(x + V.x, y + V.y, z + V.z);
+    }
+
+    Vec3& operator += (Vec3 V)
+    {
+        x += V.x;
+        y += V.y;
+        z += V.z;
+
+        return *this;
     }
 
     Vec3 operator - (const Vec3 &V) const
@@ -33,7 +42,7 @@ public:
         return Vec3(m * V.x, m * V.y, m * V.z);
     }
 
-    friend Vec3 operator * (const Type &m, Vec3 &V)
+    friend Vec3 operator * (const Type &m, const Vec3 &V)
     {
         return Vec3(m * V.x, m * V.y, m * V.z);
     }
@@ -53,7 +62,7 @@ public:
         return S << '[' << V.x << ' ' << V.y << ' ' << V.z << ']';
     }
 
-    Vec3<Type> crossProduct(Vec3<Type> V)
+    Vec3<Type> crossProduct(Vec3<Type> V) const
     {
         return Vec3<Type>(
                 y*V.z - z*V.y,
@@ -62,7 +71,7 @@ public:
                 );
     }
 
-    Type dot(Vec3<Type> &V) const
+    Type dot(const Vec3<Type> &V) const
     {
         return x * V.x + y * V.y + z * V.z;
     }
@@ -336,4 +345,5 @@ typedef Vec3<float>  Vec3f;
 typedef Vec2<int>    Vec2i;
 typedef Vec2<float>  Vec2f;
 typedef Mat44<float> Mat44f;
+typedef Mat44<float> Matrix44f;
 
