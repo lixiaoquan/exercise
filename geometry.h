@@ -32,6 +32,11 @@ public:
         return Vec3(x * m, y * m, z * m);
     }
 
+    Vec3 operator * (const Vec3 &V) const
+    {
+        return Vec3(x * V.x, y * V.y, z * V.z);
+    }
+
     friend Vec3 operator / (const Type &m, Vec3 &V)
     {
         return Vec3(m / V.x, m / V.y, m / V.z);

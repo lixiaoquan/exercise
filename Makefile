@@ -1,7 +1,8 @@
 TARGET  := prospproj pinhole raster3d projmatrix glprojmatrix glorthoprojmatrix camerarays simpleshapes raybox raytri \
            raytracepolymesh \
            raytracetransform \
-           shading
+           shading \
+           phong
 
 SRC_FILE := main.cpp
 
