@@ -2,7 +2,8 @@ TARGET  := prospproj pinhole raster3d projmatrix glprojmatrix glorthoprojmatrix 
            raytracepolymesh \
            raytracetransform \
            shading \
-           phong
+           phong \
+           mcsim
 
 SRC_FILE := main.cpp
 
@@ -11,7 +12,7 @@ SRC_FILE := main.cpp
 all : $(TARGET)
 
 %:%.cpp
-	g++ -o $@ $^ -std=c++11 -O3
+	g++ -o $@ $^ -std=gnu++11 -O3
 
 clean:
 	rm -f $(TARGET) *.o *.svg *.ppm .*.swp
