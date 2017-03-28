@@ -56,12 +56,30 @@ void spin(double &mu_x, double &mu_y, double &mu_z, const double &g)
 }
 
 
-void MCSimulation(double * records, double * reflects, double *absorption, uint32_t size)
+void MCSimulation(double * records, double * reflects, double *absorption, uint32_t size, uint32_t pIndex)
 {
     uint32_t nphotons = 100000; //sim that much of nphotons.
 
     /* Beer's Law Parameters. */
-    double sigma_a = 1, sigma_s = 2, sigma_t = sigma_a + sigma_s;
+    double sigma_a = 1, sigma_s = 2;
+
+    if (pIndex == 0)
+    {
+        sigma_a = 1;
+        sigma_s = 2;
+    }
+    else if (pIndex == 1)
+    {
+        sigma_a = 1.2;
+        sigma_s = 2.4;
+    }
+    else
+    {
+        sigma_a = 1.4;
+        sigma_s = 2.8;
+    }
+
+    double sigma_t = sigma_a + sigma_s;
 
     double Rd = 0, Tt = 0;
 
@@ -152,24 +170,27 @@ int main()
     {
         records[i] = new double[size * size * 3];
         memset(records[i], 0x0, sizeof(double) * size * size * 3);
-        pixels[i] = new float[size * size];
+        pixels[i] = new float[size * size * 3];
     }
 
 
-    uint32_t npass = 1;
-
-    while (npass < 64)
+    for (int c = 0; c < 3; c++)
     {
-        MCSimulation(records[0], records[1], records[2], size);
+        uint32_t npass = 1;
 
-        npass++;
-    }
-
-    for (int i = 0; i < size * size ; i++)
-    {
-        for (int j = 0; j < 3; j++)
+        while (npass < 64)
         {
-            pixels[j][i] = records[j][i] / (npass - 1);
+            MCSimulation(records[0], records[1], records[2], size, c);
+
+            npass++;
+        }
+
+        for (int i = 0; i < size * size ; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                pixels[j][i * 3 + c] = records[j][i] / (npass - 1);
+            }
         }
     }
 
@@ -183,8 +204,10 @@ int main()
         ofs.open(name, std::ios::out | std::ios::binary);
         ofs << "P6\n" << size << " " << size << "\n255\n";
         for (uint32_t i = 0; i < size * size; ++i) {
-            unsigned char val = (unsigned char)(255 * std::min(1.0f, pixels[j][i]));
-            ofs << val << val << val;
+            unsigned char r = (unsigned char)(255 * std::min(1.0f, pixels[j][i * 3]));
+            unsigned char g = (unsigned char)(255 * std::min(1.0f, pixels[j][i * 3 + 1]));
+            unsigned char b = (unsigned char)(255 * std::min(1.0f, pixels[j][i * 3 + 2]));
+            ofs << r << g << b;
         }
 
         ofs.close();
