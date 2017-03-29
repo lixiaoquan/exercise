@@ -3,7 +3,8 @@ TARGET  := prospproj pinhole raster3d projmatrix glprojmatrix glorthoprojmatrix 
            raytracetransform \
            shading \
            phong \
-           mcsim
+           mcsim \
+           mcintegration
 
 SRC_FILE := main.cpp
 
