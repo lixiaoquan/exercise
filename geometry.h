@@ -22,6 +22,16 @@ public:
         return *this;
     }
 
+    Vec3& operator /= (const float &m)
+    {
+        x /= m;
+        y /= m;
+        z /= m;
+
+        return *this;
+    }
+
+
     Vec3 operator - (const Vec3 &V) const
     {
         return Vec3(x - V.x, y - V.y, z - V.z);
@@ -30,6 +40,11 @@ public:
     Vec3 operator * (const Type &m) const
     {
         return Vec3(x * m, y * m, z * m);
+    }
+
+    Vec3 operator / (const Type &m) const
+    {
+        return Vec3(x / m, y / m, z / m);
     }
 
     Vec3 operator * (const Vec3 &V) const

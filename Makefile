@@ -4,7 +4,8 @@ TARGET  := prospproj pinhole raster3d projmatrix glprojmatrix glorthoprojmatrix 
            shading \
            phong \
            mcsim \
-           mcintegration
+           mcintegration \
+           indirectdiffuse
 
 SRC_FILE := main.cpp
 
