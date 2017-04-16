@@ -722,7 +722,7 @@ void createCoordinateSystem(const Vec3f &N, Vec3f &Nt, Vec3f &Nb)
     }
     else
     {
-        Nt = Vec3f(0, -N.x, N.y) / sqrtf(N.y * N.y + N.z * N.z);
+        Nt = Vec3f(0, -N.z, N.y) / sqrtf(N.y * N.y + N.z * N.z);
     }
 
     Nb = N.crossProduct(Nt);
@@ -760,7 +760,7 @@ Vec3f castRay(
 
     if (depth > maxDepth)
     {
-        return kDefaultBackgroundColor;
+        return 0;
     }
 
     if (trace(orig, dir, objects, t, index, uv, hitObject))
@@ -811,6 +811,7 @@ Vec3f castRay(
 
                 Vec3f indirectLight = 0;
 
+#if 1
                 uint32_t N = 128;
 
                 Vec3f Nt, Nb;
@@ -825,19 +826,24 @@ Vec3f castRay(
                     float r1 = distribution(generator);
                     float r2 = distribution(generator);
 
+   //                 cout << "r1 r2 "<< r1 << " " << r2 << endl;
                     Vec3f  sample = uniformSampleHemisphere(r1, r2);
 
                     Vec3f sampleWorld(
                         sample.x * Nb.x + sample.y * hitNormal.x + sample.z * Nt.x,
                         sample.x * Nb.y + sample.y * hitNormal.y + sample.z * Nt.y,
-                        sample.z * Nb.x + sample.y * hitNormal.z + sample.z * Nt.z
+                        sample.x * Nb.z + sample.y * hitNormal.z + sample.z * Nt.z
                     );
 
+ //                   cout << "sampleWorld"<< sampleWorld << " "<< Nt <<" " << Nb << endl;
                     indirectLight += r1 * castRay(hitPoint + sampleWorld * bias, sampleWorld, objects, lights, depth + 1) / pdf;
+  //                  cout << "indirectLight"<< indirectLight << endl;
 
+//                    exit(0);
                 }
 
                 indirectLight /= (float)N;
+#endif
 
                 hitColor = (directLighting / M_PI + 2 * indirectLight) * hitObject->albedo;
 
@@ -851,7 +857,7 @@ Vec3f castRay(
     }
     else
     {
-        hitColor = kDefaultBackgroundColor;
+        hitColor = 1;
     }
 
     return hitColor;
